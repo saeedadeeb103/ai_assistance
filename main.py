@@ -1,12 +1,25 @@
-import openai
+
 import os 
 from dotenv import load_dotenv
 import pyttsx3  
 import speech_recognition as sr 
 from bardapi import Bard
+import requests
 
 os.environ['_BARD_API_KEY'] = 'bwjtNKZxQ4zwPDGGN7h1HupgzbsqK-aPWpOJM2HtIjujcfQayWLWMkoQq5IC0euAhFJbsw.'
+session = requests.Session()
+session.headers = {
+            "Host": "bard.google.com",
+            "X-Same-Domain": "1",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+            "Origin": "https://bard.google.com",
+            "Referer": "https://bard.google.com/",
+        }
+session.cookies.set("__Secure-1PSID", os.getenv("_BARD_API_KEY")) 
+# session.cookies.set("__Secure-1PSID", token) 
 
+bard = Bard(session=session, timeout=30)
 
 def SpeechText(voice):
 
@@ -35,22 +48,41 @@ def record_text():
         except sr.UnknownValueError:
             print("Unknown Error Occurred")
 
+def max_sentence(text, max_length):
+    # Split the text into sentences
+    sentences = text.split('\n')
+    
+    # Filter sentences based on their length
+    valid_sentences = [sentence.strip() for sentence in sentences if len(sentence.strip()) <= max_length]
+    
+    # Find the longest sentence among the valid ones
+    if valid_sentences:
+        longest_sentence = max(valid_sentences, key=len)
+        return longest_sentence
+    else:
+        return None  # No valid sentences found
 
-def API_Request(messages):
-    response = Bard().get_answer(messages[0]['content'])['content']
+def API_Request(message):
+    response = bard.get_answer(message)['content']
+    #response = max_token(response, 30)
+    #response = max_sentence(response, 2)
     message = response
-    messages.append(response)
 
     return message
-messages = [{"content": "Act like you are jarvis from ironman "}]
+messages = "Hi, Act like you are jarvis from ironman"
 
 while(1):
-    text = record_text()
-    messages.append({"content": text})
+    
 
     response = API_Request(messages)
+    if response.find("*"):
+        response = response.replace("*", "")
+    x = max_sentence(response, 150)
     SpeechText(response)
-
     print(response)
-
+    text = record_text()
+    print(text)
+    messages = text + "only give a very brief answer"
+    if messages.find("shut up") != -1:
+        break
 
