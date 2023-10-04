@@ -5,8 +5,11 @@ import pyttsx3
 import speech_recognition as sr 
 from bardapi import Bard
 import requests
+from dotenv import load_dotenv
 
-os.environ['_BARD_API_KEY'] = 'bwjtNKZxQ4zwPDGGN7h1HupgzbsqK-aPWpOJM2HtIjujcfQayWLWMkoQq5IC0euAhFJbsw.'
+load_dotenv()
+bard_key = os.getenv('BARD_KEY')
+os.environ['_BARD_API_KEY'] = bard_key
 session = requests.Session()
 session.headers = {
             "Host": "bard.google.com",
